@@ -1,16 +1,20 @@
-from math import acos, asin, sin, cos, sqrt
+from math import acos, asin, sin, cos, sqrt, degrees
+from typing import List,Tuple
+
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
 def get_path_points(start_point, end_point, discretization):
     path_points = []
     x_start, y_start = start_point
     x_end, y_end = end_point
+
     l, m = x_end - x_start, y_end - y_start
     for i in range(discretization + 1):
         x = l * i / discretization + x_start
         y = m * i / discretization + y_start
         path_points.append((x, y))
-    print(path_points)
     return path_points
 
 
@@ -35,11 +39,11 @@ def get_angles(path_points, l_1, l_2):
         betta_1 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_2 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
-                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
+                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_3 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_4 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
-                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
+                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
 
         for betta in {betta_1, betta_2, betta_3, betta_4}:
             combinations.append((acos((x - l_2 * cos(betta)) / l_1), betta))
@@ -54,32 +58,80 @@ def get_angles(path_points, l_1, l_2):
 
             if abs(x_2 - point[0]) < 0.03 and abs(y_2 - point[1]) < 0.03:
                 all_angles.append((alpha, betta))
-            else:
-                continue
-
-    print(all_angles)
     return all_angles
 
 
-def get_middle_points(all_angles, l_1):
-    all_middle_points = []
-    for i in range(len(all_angles)):
-        middle_point_x = l_1 * cos(all_angles[i][0])
-        middle_point_y = l_1 * sin(all_angles[i][0])
-        if (middle_point_x, middle_point_y) not in all_middle_points:
-            all_middle_points.append((middle_point_x, middle_point_y))
+def filter_angles(all_angles):
+    filtered_angles_1 = [all_angles[0]]
+    filtered_angles_2 = []
 
-    print(all_middle_points)
-    return all_middle_points
+    for i in range(1, len(all_angles)):
+        prev_alpha, prev_betta = filtered_angles_1[-1]
+        alpha, betta = all_angles[i]
 
+        if abs(alpha - prev_alpha) < 0.0873 and abs(betta - prev_betta) < 0.0873:
+            filtered_angles_1.append((alpha, betta))
+        else:
+            filtered_angles_2.append((alpha, betta))
+    return filtered_angles_1, filtered_angles_2
+
+
+def get_middle_points(path_1, path_2, l_1):
+    middle_points_1 = []
+    middle_points_2 = []
+    for i in range(len(path_1)):
+        middle_point_x_1 = l_1 * cos(path_1[i][0])
+        middle_point_y_1 = l_1 * sin(path_1[i][0])
+        middle_points_1.append((middle_point_x_1, middle_point_y_1))
+    for i in range(len(path_2)):
+        middle_point_x_2 = l_1 * cos(path_2[i][0])
+        middle_point_y_2 = l_1 * sin(path_2[i][0])
+        middle_points_2.append((middle_point_x_2, middle_point_y_2))
+    return middle_points_1, middle_points_2
+
+
+def make_lines(path_points, middle_points_1, middle_points_2):
+
+    tup1 = [((0, 0), (middle_points_1[i][0], middle_points_1[i][1]), (path_points[i][0], path_points[i][1])) for i in range(len(path_points) - 1)]
+    tup2 = [((0, 0), (middle_points_2[i][0], middle_points_2[i][1]), (path_points[i][0], path_points[i][1])) for i in range(len(path_points) - 1)]
+
+    return [tup1, tup2]
+
+
+def test(frames: int, ax, discretization: int, tup1: List[Tuple], tup2: List[Tuple]):
+    a = tup1[0]
+    b = tup2[0]
+    a_x = [a[i][0] for i in range(len(a))]
+    a_y = [a[i][1] for i in range(len(a))]
+    b_x = [b[i][0] for i in range(len(b))]
+    b_y = [b[i][1] for i in range(len(b))]
+
+    line_1, = ax.plot(a_x, a_y, color='green', marker='o', markersize=7)
+    line_2, = ax.plot(b_x, b_y, color='red', marker='o', markersize=7)
+    return [line_1, line_2]
 
 
 def main():
-    l1, l2 = int(input()), int(input())
-    start_point = int(input()), int(input())
-    end_point = int(input()), int(input())
-    discretization = int(input())
-    path_points = get_path_points(start_point, end_point, discretization)
-    all_angles = get_angles(path_points, l1, l2)
-    middle_points = get_middle_points(all_angles, l1)
-main()
+    l_1, l_2 = map(float, input('L1 L2: ').split())
+    points1 = tuple(map(float, input(f'X1 Y1: ').split()))
+    points2 = tuple(map(float, input(f'X2 Y2: ').split()))
+    discretization = 50
+    path_points = get_path_points(points1, points2, discretization)
+    all_angles = get_angles(path_points, l_1, l_2)
+    path_1, path_2 = filter_angles(all_angles)
+
+    middle_points_1, middle_points_2 = get_middle_points(path_1, path_2, l_1)
+
+    line_1, line_2 = make_lines(path_points, middle_points_1, middle_points_2)
+
+    fig, ax = plt.subplots()
+    ax.set_xlim([-1, 15])
+    ax.set_ylim([-1, 15])
+
+    animation = FuncAnimation(fig, test, frames=discretization, fargs=(ax, discretization,line_1,line_2),
+                              interval=50, blit=True, repeat=True, repeat_delay=300)
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()
