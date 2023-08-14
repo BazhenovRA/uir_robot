@@ -1,8 +1,9 @@
 from math import acos, asin, sin, cos, sqrt, degrees
-from typing import List,Tuple
+from typing import List, Tuple
 
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
+import matplotlib.widgets as mwidgets
 
 
 def get_path_points(start_point, end_point, discretization):
@@ -39,11 +40,11 @@ def get_angles(path_points, l_1, l_2):
         betta_1 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_2 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
-                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
+                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_3 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
         betta_4 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
-                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
+                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
 
         for betta in {betta_1, betta_2, betta_3, betta_4}:
             combinations.append((acos((x - l_2 * cos(betta)) / l_1), betta))
@@ -91,31 +92,32 @@ def get_middle_points(path_1, path_2, l_1):
 
 
 def make_lines(path_points, middle_points_1, middle_points_2):
+    line_1 = [((0, 0), (middle_points_1[i][0], middle_points_1[i][1]), (path_points[i][0], path_points[i][1])) for i in
+              range(len(path_points) - 1)]
+    line_2 = [((0, 0), (middle_points_2[i][0], middle_points_2[i][1]), (path_points[i][0], path_points[i][1])) for i in
+              range(len(path_points) - 1)]
 
-    tup1 = [((0, 0), (middle_points_1[i][0], middle_points_1[i][1]), (path_points[i][0], path_points[i][1])) for i in range(len(path_points) - 1)]
-    tup2 = [((0, 0), (middle_points_2[i][0], middle_points_2[i][1]), (path_points[i][0], path_points[i][1])) for i in range(len(path_points) - 1)]
-
-    return [tup1, tup2]
+    return line_1, line_2
 
 
-def test(frames: int, ax, discretization: int, tup1: List[Tuple], tup2: List[Tuple]):
-    a = tup1[0]
-    b = tup2[0]
-    a_x = [a[i][0] for i in range(len(a))]
-    a_y = [a[i][1] for i in range(len(a))]
-    b_x = [b[i][0] for i in range(len(b))]
-    b_y = [b[i][1] for i in range(len(b))]
+def show_plot(frames: int, ax, line_1, line_2, ):
+    x_points_1 = [point[0] for point in line_1[frames - 1]]
+    y_points_1 = [point[1] for point in line_1[frames - 1]]
 
-    line_1, = ax.plot(a_x, a_y, color='green', marker='o', markersize=7)
-    line_2, = ax.plot(b_x, b_y, color='red', marker='o', markersize=7)
-    return [line_1, line_2]
+    x_points_2 = [point[0] for point in line_2[frames - 1]]
+    y_points_2 = [point[1] for point in line_2[frames - 1]]
+
+    a, = ax.plot(x_points_1, y_points_1, color='green', marker='o', markersize=7)
+    b, = ax.plot(x_points_2, y_points_2, color='red', marker='o', markersize=7)
+
+    return [a, b]
 
 
 def main():
     l_1, l_2 = map(float, input('L1 L2: ').split())
     points1 = tuple(map(float, input(f'X1 Y1: ').split()))
     points2 = tuple(map(float, input(f'X2 Y2: ').split()))
-    discretization = 50
+    discretization = 100
     path_points = get_path_points(points1, points2, discretization)
     all_angles = get_angles(path_points, l_1, l_2)
     path_1, path_2 = filter_angles(all_angles)
@@ -128,8 +130,13 @@ def main():
     ax.set_xlim([-1, 15])
     ax.set_ylim([-1, 15])
 
-    animation = FuncAnimation(fig, test, frames=discretization, fargs=(ax, discretization,line_1,line_2),
+    animation = FuncAnimation(fig, show_plot, frames=len(line_1), fargs=(ax, line_1, line_2),
                               interval=50, blit=True, repeat=True, repeat_delay=300)
+    plt.title("Манипулятор на плоскости")
+    plt.xlabel('Ось Х')
+    plt.ylabel('Ось У')
+    plt.legend(['line_1', ' line_2'])
+    plt.grid(which='major')
     plt.show()
 
 
