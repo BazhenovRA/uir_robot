@@ -1,9 +1,7 @@
-from math import acos, asin, sin, cos, sqrt, degrees
-from typing import List, Tuple
+from math import acos, sin, cos, sqrt
 
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-import matplotlib.widgets as mwidgets
 
 
 def get_path_points(start_point, end_point, discretization):
