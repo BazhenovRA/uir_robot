@@ -92,10 +92,9 @@ def get_middle_points(path_1, path_2, l_1):
 
 
 def make_lines(path_points, middle_points_1, middle_points_2):
-    line_1 = [((0, 0), (middle_points_1[i][0], middle_points_1[i][1]), (path_points[i][0], path_points[i][1])) for i in
-              range(len(path_points) - 1)]
-    line_2 = [((0, 0), (middle_points_2[i][0], middle_points_2[i][1]), (path_points[i][0], path_points[i][1])) for i in
-              range(len(path_points) - 1)]
+    # TODO: (0, 0) - robot position (нужно добавить в параметры)
+    line_1 = [((0, 0), middle_points_1[i], path_points[i]) for i in range(len(path_points))]
+    line_2 = [((0, 0), middle_points_2[i], path_points[i]) for i in range(len(path_points))]
 
     return line_1, line_2
 
