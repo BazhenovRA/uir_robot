@@ -101,11 +101,8 @@ def make_lines(path_points, middle_points_1, middle_points_2):
 
 
 def show_plot(frames: int, ax, line_1, line_2, ):
-    x_points_1 = [point[0] for point in line_1[frames - 1]]
-    y_points_1 = [point[1] for point in line_1[frames - 1]]
-
-    x_points_2 = [point[0] for point in line_2[frames - 1]]
-    y_points_2 = [point[1] for point in line_2[frames - 1]]
+    x_points_1, y_points_1 = zip(*line_1[frames - 1])
+    x_points_2, y_points_2 = zip(*line_2[frames - 1])
 
     a, = ax.plot(x_points_1, y_points_1, color='green', marker='o', markersize=7)
     b, = ax.plot(x_points_2, y_points_2, color='red', marker='o', markersize=7)
