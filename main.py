@@ -113,12 +113,8 @@ def show_plot(frames: int, ax, line_1, line_2, ):
     return [a, b]
 
 
-def main():
-    l_1, l_2 = map(float, input('L1 L2: ').split())
-    points1 = tuple(map(float, input(f'X1 Y1: ').split()))
-    points2 = tuple(map(float, input(f'X2 Y2: ').split()))
-    discretization = 100
-    path_points = get_path_points(points1, points2, discretization)
+def calculate_trajectory(l_1, l_2, start_point, end_point, discretization) -> None:
+    path_points = get_path_points(start_point, end_point, discretization)
     all_angles = get_angles(path_points, l_1, l_2)
     path_1, path_2 = filter_angles(all_angles)
 
@@ -141,4 +137,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # l_1, l_2 = map(float, input('L1 L2: ').split())
+    # start_point = tuple(map(float, input(f'X1 Y1: ').split()))
+    # end_point = tuple(map(float, input(f'X2 Y2: ').split()))
+    l_1, l_2 = 10, 5
+    start_point = 10.0, 10.0
+    end_point = 10.0, 5.0
+    discretization = 100
+    calculate_trajectory(l_1, l_2, start_point, end_point, discretization)
