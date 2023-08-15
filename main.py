@@ -77,17 +77,14 @@ def filter_angles(all_angles):
     return filtered_angles_1, filtered_angles_2
 
 
+def calculate_points(path, l_1):
+    return [(l_1 * cos(point[0]), l_1 * sin(point[0])) for point in path]
+
+
 def get_middle_points(path_1, path_2, l_1):
-    middle_points_1 = []
-    middle_points_2 = []
-    for i in range(len(path_1)):
-        middle_point_x_1 = l_1 * cos(path_1[i][0])
-        middle_point_y_1 = l_1 * sin(path_1[i][0])
-        middle_points_1.append((middle_point_x_1, middle_point_y_1))
-    for i in range(len(path_2)):
-        middle_point_x_2 = l_1 * cos(path_2[i][0])
-        middle_point_y_2 = l_1 * sin(path_2[i][0])
-        middle_points_2.append((middle_point_x_2, middle_point_y_2))
+    middle_points_1 = calculate_points(path_1, l_1)
+    middle_points_2 = calculate_points(path_2, l_1)
+
     return middle_points_1, middle_points_2
 
 
