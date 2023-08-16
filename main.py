@@ -10,12 +10,13 @@ def get_path_points(start_point, end_point, discretization):
     x_start, y_start = start_point
     x_end, y_end = end_point
 
-    l, m = x_end - x_start, y_end - y_start
-    for i in range(discretization + 1):
-        x = l * i / discretization + x_start
-        y = m * i / discretization + y_start
-        path_points.append((x, y))
-    return path_points
+def get_path_points(start, end, discretization):
+    """Compute linear path points between start and end."""
+    x_start, y_start = start
+    x_end, y_end = end
+    x_values = np.linspace(x_start, x_end, discretization)
+    y_values = np.linspace(y_start, y_end, discretization)
+    return list(zip(x_values, y_values))
 
 
 def get_angles(path_points, l_1, l_2):
