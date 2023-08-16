@@ -34,8 +34,14 @@ def get_angles(point, l_1, l_2):
     return [(theta1_1, theta2_1), (theta1_2, theta2_2)]
 
 
-def calculate_points(path, l_1):
-    return [(l_1 * cos(point[0]), l_1 * sin(point[0])) for point in path]
+def update_plot(frame, path_points, l_1, l_2, lines):
+    """Update the plot for each frame."""
+    angles = get_angles(path_points[frame], l_1, l_2)
+    for i, (theta1, theta2) in enumerate(angles):
+        x1, y1 = l_1 * np.cos(theta1), l_1 * np.sin(theta1)
+        x2, y2 = x1 + l_2 * np.cos(theta1 + theta2), y1 + l_2 * np.sin(theta1 + theta2)
+        lines[i].set_data([0, x1, x2], [0, y1, y2])
+    return lines
 
 
 def get_middle_points(path_1, path_2, l_1):
