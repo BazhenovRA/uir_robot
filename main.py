@@ -19,62 +19,19 @@ def get_path_points(start, end, discretization):
     return list(zip(x_values, y_values))
 
 
-def get_angles(path_points, l_1, l_2):
-    all_angles = []
-    for point in path_points:
+def get_angles(point, l_1, l_2):
+    """Calculate joint angles for the manipulator to reach a point."""
+    x, y = point
+    cos_theta2 = (x ** 2 + y ** 2 - l_1 ** 2 - l_2 ** 2) / (2 * l_1 * l_2)
+    sin_theta2 = np.sqrt(1 - cos_theta2 ** 2)
 
-        combinations = []
-        x, y = point
-        sqrt_expression = sqrt(- l_1 ** 4 * l_2 ** 2 * y ** 2
-                               + 2 * l_1 ** 2 * l_2 ** 4 * y ** 2
-                               - l_2 ** 6 * y ** 2
-                               + 2 * l_1 ** 2 * l_2 ** 2 * x ** 2 * y ** 2
-                               + 2 * l_2 ** 4 * x ** 2 * y ** 2
-                               - l_2 ** 2 * x ** 4 * y ** 2
-                               + 2 * l_1 ** 2 * l_2 ** 2 * y ** 4
-                               + 2 * l_2 ** 4 * y ** 4
-                               - 2 * l_2 ** 2 * x ** 2 * y ** 4
-                               - l_2 ** 2 * y ** 6
-                               )
+    theta2_1 = np.arctan2(sin_theta2, cos_theta2)
+    theta2_2 = np.arctan2(-sin_theta2, cos_theta2)
 
-        betta_1 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
-                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
-        betta_2 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 + sqrt_expression) /
-                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
-        betta_3 = acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
-                       (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
-        betta_4 = -acos((-l_1 ** 2 * l_2 * x + l_2 ** 3 * x + l_2 * x ** 3 + l_2 * x * y ** 2 - sqrt_expression) /
-                        (2 * (l_2 ** 2 * x ** 2 + l_2 ** 2 * y ** 2)))
+    theta1_1 = np.arctan2(y, x) - np.arctan2(l_2 * np.sin(theta2_1), l_1 + l_2 * np.cos(theta2_1))
+    theta1_2 = np.arctan2(y, x) - np.arctan2(l_2 * np.sin(theta2_2), l_1 + l_2 * np.cos(theta2_2))
 
-        for betta in {betta_1, betta_2, betta_3, betta_4}:
-            combinations.append((acos((x - l_2 * cos(betta)) / l_1), betta))
-            combinations.append((-acos((x - l_2 * cos(betta)) / l_1), betta))
-
-        for alpha, betta in combinations:
-            x_1 = l_1 * cos(alpha)
-            y_1 = l_1 * sin(alpha)
-
-            x_2 = x_1 + l_2 * cos(betta)
-            y_2 = y_1 + l_2 * sin(betta)
-
-            if abs(x_2 - point[0]) < 0.03 and abs(y_2 - point[1]) < 0.03:
-                all_angles.append((alpha, betta))
-    return all_angles
-
-
-def filter_angles(all_angles):
-    filtered_angles_1 = [all_angles[0]]
-    filtered_angles_2 = []
-
-    for i in range(1, len(all_angles)):
-        prev_alpha, prev_betta = filtered_angles_1[-1]
-        alpha, betta = all_angles[i]
-
-        if abs(alpha - prev_alpha) < 0.0873 and abs(betta - prev_betta) < 0.0873:
-            filtered_angles_1.append((alpha, betta))
-        else:
-            filtered_angles_2.append((alpha, betta))
-    return filtered_angles_1, filtered_angles_2
+    return [(theta1_1, theta2_1), (theta1_2, theta2_2)]
 
 
 def calculate_points(path, l_1):
