@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import Slider, Button, TextBox
+from matplotlib.widgets import Slider
 
 # Global variable for the animation
 ani = None
@@ -45,9 +45,11 @@ def update_plot(frame, path_points, l_1, l_2, lines):
     return lines
 
 
-def get_middle_points(path_1, path_2, l_1):
-    middle_points_1 = calculate_points(path_1, l_1)
-    middle_points_2 = calculate_points(path_2, l_1)
+def update_speed(val):
+    """Update animation speed based on slider value."""
+    ani.event_source.stop()  # Stop the current animation
+    ani.event_source.interval = 1000 / val  # Update the interval
+    ani.event_source.start()  # Restart the animation with the new interval
 
     return middle_points_1, middle_points_2
 
@@ -72,7 +74,10 @@ def main():
     # Create path points
     path_points = get_path_points(start_point, end_point, 1000)
 
-    discretization_slider.on_changed(update_discretization)
+    # Add speed control slider
+    ax_slider = plt.axes([0.2, 0.02, 0.6, 0.03], facecolor='lightgoldenrodyellow')
+    slider = Slider(ax_slider, 'Speed', 1, 500, valinit=100)
+    slider.on_changed(update_speed)
 
     # Animation
     global ani
