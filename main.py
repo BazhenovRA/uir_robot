@@ -6,10 +6,6 @@ from matplotlib.widgets import Slider
 # Global variable for the animation
 ani = None
 
-def get_path_points(start_point, end_point, discretization):
-    path_points = []
-    x_start, y_start = start_point
-    x_end, y_end = end_point
 
 def get_path_points(start, end, discretization):
     """Compute linear path points between start and end."""
@@ -51,7 +47,6 @@ def update_speed(val):
     ani.event_source.interval = 1000 / val  # Update the interval
     ani.event_source.start()  # Restart the animation with the new interval
 
-    return middle_points_1, middle_points_2
 
 def main():
     # Input parameters
