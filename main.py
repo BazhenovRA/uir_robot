@@ -16,9 +16,13 @@ def get_path_points(start, end, discretization):
     return list(zip(x_values, y_values))
 
 
-def get_angles(point, l_1, l_2):
+def get_angles(point, l_1, l_2, base_point):
     """Calculate joint angles for the manipulator to reach a point."""
     x, y = point
+    x0, y0 = base_point
+    x = x - x0
+    y = y - y0
+
     cos_theta2 = (x ** 2 + y ** 2 - l_1 ** 2 - l_2 ** 2) / (2 * l_1 * l_2)
     sin_theta2 = np.sqrt(1 - cos_theta2 ** 2)
 
@@ -31,13 +35,14 @@ def get_angles(point, l_1, l_2):
     return [(theta1_1, theta2_1), (theta1_2, theta2_2)]
 
 
-def update_plot(frame, path_points, l_1, l_2, lines):
+def update_plot(frame, path_points, l_1, l_2, lines, base_point):
     """Update the plot for each frame."""
-    angles = get_angles(path_points[frame], l_1, l_2)
+    angles = get_angles(path_points[frame], l_1, l_2, base_point)
+    x0, y0 = base_point
     for i, (theta1, theta2) in enumerate(angles):
-        x1, y1 = l_1 * np.cos(theta1), l_1 * np.sin(theta1)
+        x1, y1 = x0 + l_1 * np.cos(theta1), y0 +  l_1 * np.sin(theta1)
         x2, y2 = x1 + l_2 * np.cos(theta1 + theta2), y1 + l_2 * np.sin(theta1 + theta2)
-        lines[i].set_data([0, x1, x2], [0, y1, y2])
+        lines[i].set_data([x0, x1, x2], [y0, y1, y2])
     return lines
 
 
@@ -53,11 +58,12 @@ def main():
     l_1, l_2 = map(float, input('L1 L2: ').split())
     start_point = tuple(map(float, input('X1 Y1: ').split()))
     end_point = tuple(map(float, input('X2 Y2: ').split()))
-
+    base_point = tuple(map(float, input('X_0 Y_0: ').split()))
     # Create plot
+    x0, y0 = base_point
     fig, ax = plt.subplots()
-    ax.set_xlim([-l_1 - l_2, l_1 + l_2])
-    ax.set_ylim([-l_1 - l_2, l_1 + l_2])
+    ax.set_xlim([-l_1 - l_2 + x0, l_1 + l_2 + x0])
+    ax.set_ylim([-l_1 - l_2 + y0, l_1 + l_2 + y0])
     ax.set_title("2D Planar Manipulator")
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
@@ -79,7 +85,7 @@ def main():
     ani = FuncAnimation(fig, update_plot,
                         frames=len(path_points),
                         interval=1000 / slider.val,
-                        fargs=(path_points, l_1, l_2, lines),
+                        fargs=(path_points, l_1, l_2, lines, base_point),
                         blit=True)
 
     # Show plot
