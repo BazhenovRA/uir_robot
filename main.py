@@ -25,6 +25,8 @@ def get_angles(point, l_1, l_2, base_point):
 
     cos_theta2 = (x ** 2 + y ** 2 - l_1 ** 2 - l_2 ** 2) / (2 * l_1 * l_2)
     sin_theta2 = np.sqrt(1 - cos_theta2 ** 2)
+    if np.isnan(sin_theta2):
+        return []
 
     theta2_1 = np.arctan2(sin_theta2, cos_theta2)
     theta2_2 = np.arctan2(-sin_theta2, cos_theta2)
@@ -35,12 +37,20 @@ def get_angles(point, l_1, l_2, base_point):
     return [(theta1_1, theta2_1), (theta1_2, theta2_2)]
 
 
+def can_reach_target(l_1, l_2, start_point, end_point, base_point):
+    """Check if a two-link manipulator can reach the target point."""
+    distance_to_target = np.linalg.norm(np.array(end_point) - np.array(base_point))
+    if distance_to_target < np.abs(l_1 - l_2) or distance_to_target > l_1 + l_2:
+        return False
+    return True
+
+
 def update_plot(frame, path_points, l_1, l_2, lines, base_point):
     """Update the plot for each frame."""
     angles = get_angles(path_points[frame], l_1, l_2, base_point)
     x0, y0 = base_point
     for i, (theta1, theta2) in enumerate(angles):
-        x1, y1 = x0 + l_1 * np.cos(theta1), y0 +  l_1 * np.sin(theta1)
+        x1, y1 = x0 + l_1 * np.cos(theta1), y0 + l_1 * np.sin(theta1)
         x2, y2 = x1 + l_2 * np.cos(theta1 + theta2), y1 + l_2 * np.sin(theta1 + theta2)
         lines[i].set_data([x0, x1, x2], [y0, y1, y2])
     return lines
@@ -59,6 +69,10 @@ def main():
     start_point = tuple(map(float, input('X1 Y1: ').split()))
     end_point = tuple(map(float, input('X2 Y2: ').split()))
     base_point = tuple(map(float, input('X_0 Y_0: ').split()))
+    if not can_reach_target(l_1, l_2, start_point, end_point, base_point):
+        print("Введите другие параметры")
+        return
+
     # Create plot
     x0, y0 = base_point
     fig, ax = plt.subplots()
