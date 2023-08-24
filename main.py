@@ -68,7 +68,7 @@ def main():
     l_1, l_2 = map(float, input('L1 L2: ').split())
     start_point = tuple(map(float, input('X1 Y1: ').split()))
     end_point = tuple(map(float, input('X2 Y2: ').split()))
-    base_point = tuple(map(float, input('X_0 Y_0: ').split()))
+    base_point = tuple(map(float, input('X0 Y0: ').split()))
     if not can_reach_target(l_1, l_2, start_point, end_point, base_point):
         print("Введите другие параметры")
         return
