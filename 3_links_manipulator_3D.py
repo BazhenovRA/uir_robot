@@ -20,32 +20,38 @@ def get_angles(point, l_1, l_2, l_3):
     """Calculate joint angles for the manipulator to reach a point."""
     x, y, z = point
     beta_new = None
-    beta_angles = list(i / 100 for i in range(0, 36000))
-    for i in range(len(beta_angles) - 1):
-        beta_0 = beta_angles[i]
-        beta = beta_angles[i + 1]
-        cos_alpha_0 = (np.cos(beta_0) * x + np.sin(beta_0) * y)/(np.sqrt(x ** 2 + y ** 2))
+    lst = []
+    beta_angles = list(i / 2 for i in range(0, 720))
+    for i in range(len(beta_angles)):
+        # beta_0 = beta_angles[i]
+        beta = beta_angles[i]
+        # cos_alpha_0 = (np.cos(beta_0) * x + np.sin(beta_0) * y)/(np.sqrt(x ** 2 + y ** 2))
         cos_alpha = (np.cos(beta) * x + np.sin(beta) * y) / (np.sqrt(x ** 2 + y ** 2))
-        if -1 > cos_alpha or cos_alpha > 1:
-            continue
+        # if i < 500:
+        #    continue
+        # if -1 > cos_alpha or cos_alpha > 1:
+        #    continue
         if -1 > cos_alpha or cos_alpha > 1:
             continue
         else:
-            alpha_0 = np.arccos(cos_alpha_0)
-            alpha = np.arccos(cos_alpha)
-            if alpha < alpha_0:
-                continue
-            if alpha > alpha_0:
-                beta_new = beta_0
-                break
 
+            # alpha_0 = np.arccos(cos_alpha_0)
+            alpha = np.arccos(cos_alpha)
+            lst.append((alpha, beta))
+            #if alpha < alpha_0:
+            #    continue
+            #if alpha > alpha_0:
+            #    beta_new = beta_0
+             #   break
+    kortezh = min(lst)
+    beta_new = kortezh[1]
     z0 = 0
     x0, y0 = l_1 * np.cos(beta_new),  l_1 * np.sin(beta_new)
     x = x - x0
     y = y - y0
     z = z - z0
 
-    cos_theta2 = (y ** 2 + z ** 2 - l_2 ** 2 - l_3 ** 2) / (2 * l_2 * l_3)
+    cos_theta2 = (x ** 2 + y ** 2 + z ** 2 - l_2 ** 2 - l_3 ** 2) / (2 * l_2 * l_3)
     if cos_theta2 < -1 or cos_theta2 > 1:
         return []
     sin_theta2 = np.sqrt(1 - cos_theta2 ** 2)
@@ -55,8 +61,8 @@ def get_angles(point, l_1, l_2, l_3):
     theta2_1 = np.arctan2(sin_theta2, cos_theta2)
     theta2_2 = np.arctan2(-sin_theta2, cos_theta2)
 
-    theta1_1 = np.arctan2(z, y) - np.arctan2(l_3 * np.sin(theta2_1), l_2 + l_3 * np.cos(theta2_1))
-    theta1_2 = np.arctan2(z, y) - np.arctan2(l_3 * np.sin(theta2_2), l_2 + l_3 * np.cos(theta2_2))
+    theta1_1 = np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(l_3 * np.sin(theta2_1), l_2 + l_3 * np.cos(theta2_1))
+    theta1_2 = np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(l_3 * np.sin(theta2_2), l_2 + l_3 * np.cos(theta2_2))
 
     return [(beta_new, theta1_1, theta2_1), (beta_new, theta1_2, theta2_2)]
 
@@ -104,8 +110,8 @@ def update_speed(val):
 def main():
     # Input parameters
     l_1, l_2, l_3 = 3, 10, 5  # map(float, input('L1 L2: ').split())
-    start_point = 5, 10, 5  # tuple(map(float, input('X1 Y1 Z1: ').split()))
-    end_point = 5, -10, 5  # tuple(map(float, input('X2 Y2 Z2: ').split()))
+    start_point = 7, 6, 4  # tuple(map(float, input('X1 Y1 Z1: ').split()))
+    end_point = -4, 7, 3  # tuple(map(float, input('X2 Y2 Z2: ').split()))
 
     if not can_reach_target(l_1, l_2, l_3, end_point):
         print("Введите другие параметры")
