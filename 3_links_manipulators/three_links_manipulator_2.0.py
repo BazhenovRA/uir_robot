@@ -25,8 +25,10 @@ def get_solution(l_1, l_2, l_3, beta, target_point):
     gamma_1 = np.arctan2(sin_gamma, cos_gamma)
     gamma_2 = np.arctan2(-sin_gamma, cos_gamma)
 
+    # Calculate alpha_1 and alpha_2 using arccos and arctan2
     alpha_1 = np.arctan2(y, x) - np.arctan2(l_3 * np.sin(gamma_1), l_vector + l_3 * np.cos(gamma_1))
     alpha_2 = np.arctan2(y, x) - np.arctan2(l_3 * np.sin(gamma_2), l_vector + l_3 * np.cos(gamma_2))
+
     solutions.append((alpha_1, beta, gamma_1))
     solutions.append((alpha_2, beta, gamma_2))
 
@@ -49,12 +51,13 @@ def update_plot(frame, target_point, beta_discretization, l_1, l_2, l_3, lines):
 
     for i, (alpha, beta, gamma) in enumerate(angles):
         l_vector = np.sqrt(l_1 ** 2 + l_2 ** 2 + 2 * l_1 * l_2 * np.cos(beta))
+        alpha_1 = np.arccos((l_1 ** 2 + l_vector ** 2 - l_2 ** 2) / (2 * l_vector * l_1))
+        x1, y1 = l_1 * np.cos(alpha + alpha_1), l_1 * np.sin(alpha + alpha_1)
+        x2, y2 = l_vector * np.cos(alpha), l_vector * np.sin(alpha)
+        x3, y3 = x2 + l_3 * np.cos(alpha + gamma), y2 + l_3 * np.sin(alpha + gamma)
 
-        x1, y1 = l_1 * np.cos(alpha), l_1 * np.sin(alpha)
-        x2, y2 = x1 + l_2 * np.cos(alpha + beta), y1 + l_2 * np.sin(alpha + beta)
-        x3, y3 = l_vector * np.cos(alpha) + l_3 * np.cos(alpha + gamma), l_vector * np.sin(alpha) + l_3 * np.sin(alpha + gamma)
         lines[i].set_data([0, x1, x2, x3], [0, y1, y2, y3])
-
+        print(np.sqrt((x3 - x2) ** 2 + (y3 - y2) ** 2))
     return lines
 
 
@@ -67,7 +70,7 @@ def update_speed(val):
 
 def main():
     # Input parameters
-    l_1, l_2, l_3 = 6, 1, 8  # map(float, input('L1 L2 L3: ').split())
+    l_1, l_2, l_3 = 6, 1, 9  # map(float, input('L1 L2 L3: ').split())
     target_point = -8, 8  # tuple(map(float, input('X, Y:').split()))
     base_point = (0, 0)
 

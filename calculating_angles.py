@@ -1,79 +1,203 @@
+from functools import reduce
+
 import numpy as np
+from itertools import product
 
 
-def table_dh_parameters(angles_coordinate_axis, a_measured, d_measured):
-    alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = angles_coordinate_axis
-    a1, a2, a3, a4, a5, a6 = a_measured
-    d1, d2, d3, d4, d5, d6 = d_measured
-    # theta1, theta2, theta3, theta4, theta5, theta6 = angle
-    # theta2 = theta2 - 90
-    # theta3 = theta3 + 90
-    matrix_dh = np.array([[alpha1, a1, d1],
-                          [alpha2, a2, d2],
-                          [alpha3, a3, d3],
-                          [alpha4, a4, d4],
-                          [alpha5, a5, d5],
-                          [alpha6, a6, d6]])
-    return matrix_dh
+def table_dh_parameters(joints):
+    thea_1, thea_2, thea_3, thea_4, thea_5, thea_6 = joints
+    # DH_parameters: [LINK, D, A, THEA]
+    dh_table = np.array([[thea_1, 0.4, 0.18, np.pi / 2],
+                         [thea_2, 0.135, 0.6, np.pi],
+                         [thea_3, 0.135, 0.12, - np.pi / 2],
+                         [thea_4, 0.62, 0, np.pi / 2],
+                         [thea_5, 0, 0, -np.pi / 2],
+                         [thea_6, 0.115, 0, 0]])
+    return dh_table
 
 
-def angle_1(matrix_dh, target_point):
-    x, y, z = target_point
-    matrix_1 = np.array([0, -np.sin(matrix_dh[0][0]), np.cos(matrix_dh[0][0])])
-    matrix_2 = np.array([0, -np.sin(matrix_dh[1][0]), np.cos(matrix_dh[1][0])])
-    matrix_3 = np.array([0, -np.sin(matrix_dh[2][0]), np.cos(matrix_dh[2][0])])
-    matrix_4 = np.array([0, -np.sin(matrix_dh[3][0]), np.cos(matrix_dh[3][0])])
-    matrix_5 = np.array([0, -np.sin(matrix_dh[4][0]), np.cos(matrix_dh[4][0])])
-    matrix_6 = np.array([0, -np.sin(matrix_dh[5][0]), np.cos(matrix_dh[5][0])])
+def get_target_matrix():
+    target_matrix = np.array([[-0.8086, 0, 0.5883, 0.08],
+                              [0, 1, 0, 0.1],
+                              [-0.5883, 0, -0.8086, 1.2],
+                              [0, 0, 0, 1]])
+    return target_matrix
 
-    matrix_1_6 = np.array([matrix_dh[0][0], -matrix_dh[0][2] * np.sin(matrix_dh[0][0]),
-                           matrix_dh[0][2] * np.cos(matrix_dh[0][0])])
-    matrix_2_6 = np.array([matrix_dh[1][0], -matrix_dh[1][2] * np.sin(matrix_dh[1][0]),
-                           matrix_dh[1][2] * np.cos(matrix_dh[1][0])])
-    matrix_3_6 = np.array([matrix_dh[2][0], -matrix_dh[2][2] * np.sin(matrix_dh[2][0]),
-                           matrix_dh[2][2] * np.cos(matrix_dh[2][0])])
-    matrix_4_6 = np.array([matrix_dh[3][0], -matrix_dh[3][2] * np.sin(matrix_dh[3][0]),
-                           matrix_dh[3][2] * np.cos(matrix_dh[3][0])])
-    matrix_5_6 = np.array([matrix_dh[4][0], -matrix_dh[4][2] * np.sin(matrix_dh[4][0]),
-                           matrix_dh[4][2] * np.cos(matrix_dh[4][0])])
-    matrix_6_6 = np.array([matrix_dh[5][0], -matrix_dh[5][2] * np.sin(matrix_dh[5][0]),
-                           matrix_dh[5][2] * np.cos(matrix_dh[5][0])])
 
-    result_mul_1 = matrix_1 * matrix_2 * matrix_3 * matrix_4 * matrix_5 * matrix_6
-    result_0_6 = matrix_1_6 * matrix_2_6 * matrix_3_6 * matrix_4_6 * matrix_5_6 * matrix_6_6
-    res1 = matrix_dh[5][2] * result_mul_1
-    total = result_0_6 - res1
-    print(total, res1, result_0_6)
-    # matrix_res1_1 = np.matmul(matrix_4, matrix_5, matrix_6)
-    # res = np.matmul(matrix_res1_1, matrix_res1)
-    # matrix_res2 = np.matmul(matrix_1_6, matrix_2_6, matrix_3_6)
-    # matrix_res2_2 = np.matmul(matrix_4_6, matrix_5_6, matrix_6_6)
-    # res2 = np.matmul(matrix_res2_2, matrix_res2)
+def calculating_theta1(dh_table, target_matrix):
+    x1 = target_matrix[0][3] - target_matrix[0][2] * dh_table[5][1]
+    y1 = target_matrix[1][3] - target_matrix[1][2] * dh_table[5][1]
 
-    # p46 = matrix_dh[5][2] * res
-    # p04 = res2 - p46
-    # print(res)
+    x2 = target_matrix[0][3] - target_matrix[0][2] * dh_table[5][1]
+    y2 = target_matrix[1][3] - target_matrix[1][2] * dh_table[5][1]
+
+    theta_1_1 = np.degrees(np.arctan2(y1, x1))
+    theta_1_2 = np.degrees(np.arctan2(y2, x2) - np.pi)
+    print(theta_1_1, theta_1_2)
+    list_theta1 = [theta_1_1, theta_1_2]
+    return list_theta1
+
+
+def get_matrix_vector_0_to_4(dh_table, target_matrix):
+    vector0_4 = np.array([target_matrix[0][3] - dh_table[0],
+                          target_matrix[1][3] - dh_table[1],
+                          target_matrix[2][3] - dh_table[2]])
+
+    return vector0_4
+
+
+def get_matrix_vector_4_to_6(dh_table, target_matrix):
+    vector4_6 = np.array([dh_table[5][1] * target_matrix[0][2],
+                          dh_table[5][1] * target_matrix[1][2],
+                          dh_table[5][1] * target_matrix[2][2]])
+
+    return vector4_6
+
+
+def calculating_theta3(dh_table, vector0_4):
+    vector1_4 = np.sqrt((vector0_4[0][2] - dh_table[0][1]) ** 2 + vector0_4[0][1] ** 2 + vector0_4[0][0] ** 2)
+
+    theta_3_1 = np.degrees(np.arccos(
+        -(dh_table[1][2] ** 2 + dh_table[3][1] ** 2 - np.abs(vector1_4) ** 2) / (2 * dh_table[1][2] * dh_table[3][1])))
+    theta_3_2 = np.degrees(- np.arccos(
+        -(dh_table[1][2] ** 2 + dh_table[3][1] ** 2 - np.abs(vector1_4) ** 2) / (2 * dh_table[1][2] * dh_table[3][1])))
+
+    sp_theta3 = [theta_3_1, theta_3_2]
+    print(theta_3_1, theta_3_2)
+    return sp_theta3
+
+
+def calculating_theta2(vector0_4, dh_table, list_theta1, list_theta3):
+    vector_1_4 = np.sqrt(vector0_4[0][0] ** 2 + vector0_4[0][1] ** 2 + (vector0_4[0][2] - dh_table[0][1]) ** 2)
+
+    betta1 = np.degrees(np.arctan2(vector0_4[0][2] - dh_table[0][1],
+                                   vector0_4[0][0] * np.cos(list_theta1[0] + vector0_4[0][1] * np.sin(list_theta1[0]))))
+    betta2 = np.degrees(np.arctan2(vector0_4[0][2] - dh_table[0][1],
+                                   vector0_4[0][0] * np.cos(list_theta1[1] + vector0_4[0][1] * np.sin(list_theta1[1]))))
+
+    gamma = np.degrees(
+        np.arccos((dh_table[1][2] ** 2 + vector_1_4 ** 2 - dh_table[3][1] ** 2) / (2 * dh_table[1][2] * vector_1_4)))
+
+    theta_2_1 = np.degrees(np.pi / 2) - betta1 - np.sign(list_theta3[0]) * gamma
+    theta_2_2 = np.degrees(np.pi / 2) - betta1 - np.sign(list_theta3[1]) * gamma
+    theta_2_3 = np.degrees(np.pi / 2) - betta2 - np.sign(list_theta3[0]) * gamma
+    theta_2_4 = np.degrees(np.pi / 2) - betta1 - np.sign(list_theta3[1]) * gamma
+
+    print(theta_2_1, theta_2_2, theta_2_3, theta_2_4)
+
+    list_theta2 = [theta_2_1, theta_2_2, theta_2_3, theta_2_4]
+    return list_theta2
+
+
+def get_matrix4_multiply(dh_table, list_theta1, list_theta2, list_theta3):
+    theta_elementary = 0
+    matrix0_1_1 = np.array([[np.cos(list_theta1[0]), -np.sin(list_theta1[0]), 0, dh_table[0][2]],
+                          [np.sin(list_theta1[0]) * np.cos(dh_table[0][3]), np.cos(list_theta1[0]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]), -dh_table[0][1] * np.sin(dh_table[0][3])],
+                          [np.sin(list_theta1[0]) * np.sin(dh_table[0][3]), np.cos(list_theta1[0]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]), dh_table[0][1] * np.cos(dh_table[0][3])],
+                          [0, 0, 0, 1]])
+
+    matrix0_1_2 = np.array([[np.cos(list_theta1[1]), -np.sin(list_theta1[1]), 0, dh_table[0][2]],
+                            [np.sin(list_theta1[1]) * np.cos(dh_table[0][3]),
+                             np.cos(list_theta1[1]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]),
+                             -dh_table[0][1] * np.sin(dh_table[0][3])],
+                            [np.sin(list_theta1[1]) * np.sin(dh_table[0][3]),
+                             np.cos(list_theta1[1]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]),
+                             dh_table[0][1] * np.cos(dh_table[0][3])],
+                            [0, 0, 0, 1]])
+
+    matrix1_2_1 = np.array([[np.cos(list_theta2[0]), -np.sin(list_theta2[0]), 0, dh_table[1][2]],
+                          [np.sin(list_theta2[0]) * np.cos(dh_table[1][3]), np.cos(list_theta2[0]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]), -dh_table[1][1] * np.sin(dh_table[1][3])],
+                          [np.sin(list_theta2[0]) * np.sin(dh_table[1][3]), np.cos(list_theta2[0]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]), dh_table[1][1] * np.cos(dh_table[1][3])],
+                          [0, 0, 0, 1]])
+
+    matrix1_2_2 = np.array([[np.cos(list_theta2[1]), -np.sin(list_theta2[1]), 0, dh_table[1][2]],
+                          [np.sin(list_theta2[1]) * np.cos(dh_table[1][3]),
+                           np.cos(list_theta2[1]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
+                           -dh_table[1][1] * np.sin(dh_table[1][3])],
+                          [np.sin(list_theta2[1]) * np.sin(dh_table[1][3]),
+                           np.cos(list_theta2[1]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
+                           dh_table[1][1] * np.cos(dh_table[1][3])],
+                          [0, 0, 0, 1]])
+
+    matrix1_2_3 = np.array([[np.cos(list_theta2[2]), -np.sin(list_theta2[2]), 0, dh_table[1][2]],
+                          [np.sin(list_theta2[2]) * np.cos(dh_table[1][3]),
+                           np.cos(list_theta2[2]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
+                           -dh_table[1][1] * np.sin(dh_table[1][3])],
+                          [np.sin(list_theta2[2]) * np.sin(dh_table[1][3]),
+                           np.cos(list_theta2[2]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
+                           dh_table[1][1] * np.cos(dh_table[1][3])],
+                          [0, 0, 0, 1]])
+    matrix1_2_4 = np.array([[np.cos(list_theta2[3]), -np.sin(list_theta2[3]), 0, dh_table[1][2]],
+                          [np.sin(list_theta2[3]) * np.cos(dh_table[1][3]),
+                           np.cos(list_theta2[3]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
+                           -dh_table[1][1] * np.sin(dh_table[1][3])],
+                          [np.sin(list_theta2[3]) * np.sin(dh_table[1][3]),
+                           np.cos(list_theta2[3]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
+                           dh_table[1][1] * np.cos(dh_table[1][3])],
+                          [0, 0, 0, 1]])
+
+    matrix2_3_1 = np.array([[np.cos(list_theta3[0]), -np.sin(list_theta3[0]), 0, dh_table[3][2]],
+                          [np.sin(list_theta3[0]) * np.cos(dh_table[3][3]),
+                           np.cos(list_theta3[0]) * np.cos(dh_table[3][3]), -np.sin(dh_table[3][3]),
+                           -dh_table[3][1] * np.sin(dh_table[3][3])],
+                          [np.sin(list_theta3[0]) * np.sin(dh_table[3][3]),
+                           np.cos(list_theta3[0]) * np.sin(dh_table[3][3]), np.cos(dh_table[3][3]),
+                           dh_table[3][1] * np.cos(dh_table[3][3])],
+                          [0, 0, 0, 1]])
+
+    matrix2_3_2 = np.array([[np.cos(list_theta3[1]), -np.sin(list_theta3[1]), 0, dh_table[3][2]],
+                            [np.sin(list_theta3[1]) * np.cos(dh_table[3][3]),
+                             np.cos(list_theta3[1]) * np.cos(dh_table[3][3]), -np.sin(dh_table[3][3]),
+                             -dh_table[3][1] * np.sin(dh_table[3][3])],
+                            [np.sin(list_theta3[1]) * np.sin(dh_table[3][3]),
+                             np.cos(list_theta3[1]) * np.sin(dh_table[3][3]), np.cos(dh_table[3][3]),
+                             dh_table[3][1] * np.cos(dh_table[3][3])],
+                            [0, 0, 0, 1]])
+
+    matrix3_4 = np.array([[np.cos(theta_elementary), -np.sin(theta_elementary), 0, dh_table[4][2]],
+                            [np.sin(theta_elementary) * np.cos(dh_table[4][3]),
+                             np.cos(theta_elementary) * np.cos(dh_table[4][3]), -np.sin(dh_table[4][3]),
+                             -dh_table[4][1] * np.sin(dh_table[4][3])],
+                            [np.sin(theta_elementary) * np.sin(dh_table[4][3]),
+                             np.cos(theta_elementary) * np.sin(dh_table[4][3]), np.cos(dh_table[4][3]),
+                             dh_table[4][1] * np.cos(dh_table[4][3])],
+                            [0, 0, 0, 1]])
+
+
+
+
+
+
+
+
 
 
 def main():
-    target_point = map(float, input('X Y Z: ').split())
+    joint = [0, 0, 0, 0, 0, 0]
+    sp_theta1 = calculating_theta1(table_dh_parameters(joint), get_target_matrix())
+    sp_theta3 = calculating_theta3(table_dh_parameters(joint),
+                                   get_matrix_vector_0_to_4(table_dh_parameters(joint), get_target_matrix()))
 
-    input_coordinate_axis = map(int, input('1 2 3 4 5 6: ').split())
-    angles_coordinate_axis = []
-    for elem in input_coordinate_axis:
-        elem = np.degrees(np.radians(elem))
-        angles_coordinate_axis.append(elem)
-    a_measured = map(int, input('a1 a2 a3 a4 a5 a6: ').split())
-    d_measured = map(int, input('d1 d2 d3 d4 d5 d6: ').split())
-    input_angle = map(int, input('1 2 3 4 5 6: ').split())
-    angle = []
-    for elem in input_angle:
-        elem = np.degrees(np.radians(elem))
-        angle.append(elem)
+    sp_theta2 = calculating_theta2(get_matrix_vector_0_to_4(table_dh_parameters(joint), get_target_matrix()), table_dh_parameters(joint),
+                                   sp_theta1, sp_theta3)
+    theta4 = get_matrix4_multiply(table_dh_parameters(joint), sp_theta1, sp_theta2, sp_theta3)
 
+    # target_point = map(float, input('X Y Z: ').split())
 
-angle_1(table_dh_parameters((0, -90, 0, 90, -90, -90), (0, 0, 1000, 0, 0, 0), (900, 0, 0, 300, 0, 700)),
-        (1000, 500, 300))
+    #
+    # input_coordinate_axis = map(int, input('1 2 3 4 5 6: ').split())
+    # angles_coordinate_axis = []
+    # for elem in input_coordinate_axis:
+    #     elem = np.degrees(np.radians(elem))
+    #     angles_coordinate_axis.append(elem)
+    # a_measured = map(int, input('a1 a2 a3 a4 a5 a6: ').split())
+    # d_measured = map(int, input('d1 d2 d3 d4 d5 d6: ').split())
+    # input_angle = map(int, input('1 2 3 4 5 6: ').split())
+    # angle = []
+    # for elem in input_angle:
+    #     elem = np.degrees(np.radians(elem))
+    #     angle.append(elem)
+
 
 if __name__ == '__main__':
     main()

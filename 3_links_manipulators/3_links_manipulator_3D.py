@@ -109,9 +109,9 @@ def update_speed(val):
 
 def main():
     # Input parameters
-    l_1, l_2, l_3 = 3, 10, 5  # map(float, input('L1 L2: ').split())
-    start_point = 7, 6, 4  # tuple(map(float, input('X1 Y1 Z1: ').split()))
-    end_point = -4, 7, 3  # tuple(map(float, input('X2 Y2 Z2: ').split()))
+    l_1, l_2, l_3 = 3, 10, 7  # map(float, input('L1 L2: ').split())
+    start_point = 4, 7, 3  # tuple(map(float, input('X1 Y1 Z1: ').split()))
+    end_point = -3, 10, 5  # tuple(map(float, input('X2 Y2 Z2: ').split()))
 
     if not can_reach_target(l_1, l_2, l_3, end_point):
         print("Введите другие параметры")

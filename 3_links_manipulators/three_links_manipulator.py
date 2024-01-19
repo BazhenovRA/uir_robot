@@ -25,7 +25,7 @@ def get_solution(l_1, l_2, l_3, alpha, target_point):
     theta2_1 = np.arctan2(sin_theta2, cos_theta2)
     theta2_2 = np.arctan2(-sin_theta2, cos_theta2)
 
-    theta1_1 = np.arctan2(y, x) - np.arctan2(l_3 * np.sin(theta2_1), l_2 + l_3 * np.cos(theta2_1))
+    theta1_1 = np.arctan2(y, x) -np.arctan2(l_3 * np.sin(theta2_1), l_2 + l_3 * np.cos(theta2_1))
     theta1_2 = np.arctan2(y, x) - np.arctan2(l_3 * np.sin(theta2_2), l_2 + l_3 * np.cos(theta2_2))
 
     solutions.append((alpha, theta1_1, theta2_1))
@@ -66,7 +66,7 @@ def update_speed(val):
 
 def main():
     # Input parameters
-    l_1, l_2, l_3 = 1, 10, 6  # map(float, input('L1 L2 L3: ').split())
+    l_1, l_2, l_3 = 1, 6, 10  # map(float, input('L1 L2 L3: ').split())
     target_point = 10, 10  # tuple(map(float, input('X, Y:').split()))
     base_point = (0, 0)
 
@@ -83,7 +83,7 @@ def main():
     ax.grid(True)
 
     # Create lines for the manipulator's links
-    lines = [ax.plot([], [], 'o-')[0] for _ in range(2)]
+    lines = [ax.plot([], [], 'o-')[0] for _ in range(4)]
 
     # Add speed control slider
     ax_slider = plt.axes([0.2, 0.02, 0.6, 0.03], facecolor='lightgoldenrodyellow')

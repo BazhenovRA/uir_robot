@@ -56,17 +56,24 @@ def ik(T_tar, joints_init=np.zeros(6), tolerance=1e-7):
         T_cur = fk(joints)
         deltaT = (T_tar - T_cur).flatten()
         error = np.linalg.norm(deltaT)
-        if error < tolerance:
-            return joints
         jac = get_jac(joints)
         deltaq = np.linalg.pinv(jac) @ deltaT
         joints = joints + step * deltaq
         itertime += 1
-    return False
+    return joints
 
 # Высчитывание матрицы end effector
 def fk(joints):
-    thea_1, thea_2, thea_3, thea_4, thea_5, thea_6 = joints
+    joints = list(joints)
+    thea_1 = joints[0]
+    thea_2 = joints[1]
+    thea_3 = joints[2]
+    thea_4 = joints[3]
+    thea_5 = joints[4]
+    thea_6 = joints[5]
+
+
+
     # DH_PRAMATER: [LINK, A, D, THEA], pay attention to the unit here is M
     DH = np.array([[thea_1, 0.4, 0.18, np.pi / 2],
                    [thea_2, 0.135, 0.6, np.pi],
@@ -77,19 +84,20 @@ def fk(joints):
     T = [rotate('z', thea_i).dot(trans('z', d_i)).dot(trans('x', l_i)).dot(rotate('x', a_i))
          for thea_i, d_i, l_i, a_i in DH]
     T60 = reduce(np.dot, T)
-    print(T60)
+
     return T60
 
 # Таблица с dh parameters для дальнейшего использования
 def dh_parameters(joints):
     thea_1, thea_2, thea_3, thea_4, thea_5, thea_6 = joints
-    # DH_PRAMATER: [LINK, D, A, THEA], pay attention to the unit here is M
+    # DH_PRAMATER: [LINK, D, A, THEA]
     DH = np.array([[thea_1, 0.4, 0.18, np.pi / 2],
                    [thea_2, 0.135, 0.6, np.pi],
                    [thea_3, 0.135, 0.12, - np.pi / 2],
                    [thea_4, 0.62, 0, np.pi / 2],
                    [thea_5, 0, 0, -np.pi / 2],
                    [thea_6, 0.115, 0, 0]])
+    print(joints)
     return DH
 
 
@@ -108,9 +116,18 @@ def calculating_theta1(T60, DH):
 
     # высчитываем третий угол
     o1o4 = np.sqrt((matrix0_4[2] - DH[0][1]) ** 2 + matrix0_4[1] ** 2 + matrix0_4[0] ** 2)
+    l4 = np.sqrt(DH[1][2] ** 2 + DH[2][2] ** 2)
+    theta_3_1 = np.degrees(np.arccos(-(DH[1][2] ** 2 + l4 ** 2 - np.abs(o1o4) ** 2) / 2 * DH[1][2] * l4))
+    theta_3_2 = np.degrees(- np.arccos(-(DH[1][2] ** 2 + l4 ** 2 - np.abs(o1o4) ** 2) / 2 * DH[1][2] * l4))
 
-    theta_3_1 = np.degrees(np.arccos(-(DH[1][2] ** 2 + DH[3][1] ** 2 - np.abs(o1o4) ** 2) / 2 * DH[1][2] * DH[3][1]))
-    theta_3_2 = np.degrees(- np.arccos(-(DH[1][2] ** 2 + DH[3][1] ** 2 - np.abs(o1o4) ** 2) / 2 * DH[1][2] * DH[3][1]))
+    
+    # p14_1 = np.subtract(matrix0_4, np.array([[DH[1][2] * np.cos(theta_1_1)], [DH[1][2] * np.sin(theta_1_1)], [DH[1][2] * 0]]))
+    # p14_2 = np.subtract(matrix0_4, np.array([[[DH[1][2] * np.cos(theta_1_2)], [DH[1][2] * np.sin(theta_1_2)], [DH[1][2] * 0]]]))
+    # theta_3_1 = 270 - np.degrees(np.arccos((DH[1][2] ** 2 + l4 ** 2 - np.sqrt(np.abs(p14_1[0][0]) ** 2 + np.abs(p14_1[0][1]) ** 2 + np.abs(p14_1[0][2]) ** 2) ** 2)
+    #                                        / (2 * DH[1][2] * l4)))
+    # theta_3_2 = 270 - np.degrees(np.arccos((DH[1][2] ** 2 + DH[3][1] ** 2 - np.sqrt(
+    #     np.abs(p14_2[0][0]) ** 2 + np.abs(p14_2[0][1]) ** 2 + np.abs(p14_2[0][2]) ** 2) ** 2)
+    #                                        / (2 * DH[1][2] * DH[3][1])))
     print(theta_3_1, theta_3_2)
     # высчитываем второй угол
     O1O4 = np.array([T60[0][3] - matrix4_6[0],
@@ -126,8 +143,13 @@ def calculating_theta1(T60, DH):
     print(*theta2)
 
 
-joints = np.array([0, 0, 0, 0, 0, 0])
-fk(joints)
-calculating_theta1(fk(joints), dh_parameters(joints))
+T60 = np.array([[-0.8086, 0, 0.5883, 0.08],
+              [0, 1, 0, 0.1],
+              [-0.5883, 0, -0.8086, 1.2],
+              [0, 0, 0, 1]])
+ik(T60)
+fk(ik(T60))
+
+calculating_theta1(fk(ik(T60)), dh_parameters(ik(T60)))
 
 
