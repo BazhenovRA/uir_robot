@@ -1,3 +1,5 @@
+from functools import reduce
+
 import numpy as np
 
 
@@ -76,41 +78,108 @@ def get_orientation_matrix_wrist_centre(target_matrix, dh_table):
     vector_wc = np.array([target_matrix[0][3] - dh_table[5][1] * target_matrix[0][2],
                           target_matrix[1][3] - dh_table[5][1] * target_matrix[1][2],
                           target_matrix[2][3] - dh_table[5][1] * target_matrix[2][2]])
-    print(vector_wc)
 
     return vector_wc
 
 
-def get_first_three_angles(vector_wc, l_1, l_2, l_3) -> list[tuple, tuple, tuple, tuple]:
+def get_first_three_angles(vector_wc, dh_table) -> list[tuple, tuple, tuple, tuple]:
     """Calculate joint angles for the manipulator to reach a point."""
-    x, y, z = vector_wc[0], vector_wc[1], vector_wc[2]
-
+    x, y, z = vector_wc[0] * 1000, vector_wc[1] * 1000, vector_wc[2] * 1000
     theta1 = np.degrees(np.arctan2(y, x))
+    a_1 = 300
+    a_2 = 600
+    r = 300
+    # d_2 = 135
+    # phi = np.degrees(np.arctan2(d_2, a_1))
+    d_1 = dh_table[0][1] * 1000
 
-    z0 = 0
-    x0, y0 = l_1 * np.cos(theta1), l_1 * np.sin(theta1)
-    x = x - x0
-    y = y - y0
-    z = z - z0
+    x = x / np.cos(theta1)
+    z = z - d_1
 
-    cos_theta3 = (x ** 2 + y ** 2 + z ** 2 - l_2 ** 2 - l_3 ** 2) / (2 * l_2 * l_3)
-    if cos_theta3 < -1 or cos_theta3 > 1:
-        return []
 
-    theta3_1 = np.degrees(np.arccos(cos_theta3))
-    theta3_2 = np.degrees(-np.arccos(cos_theta3))
+    # x0, y0 = d_1 * np.cos(theta1), d_1 * np.sin(theta1)
 
-    theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(l_3 * np.sin(theta3_1),
-                                                                    l_2 + l_3 * np.cos(theta3_1)))
-    theta2_2 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(l_3 * np.sin(theta3_2),
-                                                                    l_2 + l_3 * np.cos(theta3_2)))
+    cos_theta3 = (x ** 2 + z ** 2 - r ** 2 - 625 ** 2) / (2 * r * 625)
+    print(cos_theta3)
+    sin_theta3 = np.sqrt(1 - cos_theta3 ** 2)
+    theta3_1 = np.degrees(np.arctan2(sin_theta3, cos_theta3))
+    theta3_2 = np.degrees(-np.arctan2(sin_theta3, cos_theta3))
+
+
+    theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_2 * np.sin(theta3_1),
+                                                                               a_1 + a_2 * np.cos(theta3_1)))
+    theta2_2 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_2 * np.sin(theta3_2),
+                                                                               a_1 + a_2 * np.cos(theta3_2)))
 
     return [(theta1, theta2_1, theta3_1), (theta1, theta2_2, theta3_2),
             (theta1 - np.degrees(np.pi), theta2_2, theta3_2), (theta1 - np.degrees(np.pi), theta2_1, theta3_1)]
 
 
-def get_r03_matrix(dh_params):
+def get_r03_matrix(dh_table, three_angles):
+    matrix1_1 = np.array([[np.cos(three_angles[0][0]), -np.sin(three_angles[0][0]), 0, dh_table[0][2]],
+                            [np.sin(three_angles[0][0]) * np.cos(dh_table[0][3]),
+                             np.cos(three_angles[0][0]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]),
+                             -dh_table[0][1] * np.sin(dh_table[0][3])],
+                            [np.sin(three_angles[0][0]) * np.sin(dh_table[0][3]),
+                             np.cos(three_angles[0][0]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]),
+                             dh_table[0][1] * np.cos(dh_table[0][3])],
+                            [0, 0, 0, 1]])
+
+    matrix1_2 = np.array([[np.cos(three_angles[2][0]), -np.sin(three_angles[2][0]), 0, dh_table[0][2]],
+                            [np.sin(three_angles[2][0]) * np.cos(dh_table[0][3]),
+                             np.cos(three_angles[2][0]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]),
+                             -dh_table[0][1] * np.sin(dh_table[0][3])],
+                            [np.sin(three_angles[2][0]) * np.sin(dh_table[0][3]),
+                             np.cos(three_angles[2][0]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]),
+                             dh_table[0][1] * np.cos(dh_table[0][3])],
+                            [0, 0, 0, 1]])
+
+    matrix2_1 = np.array([[np.cos(three_angles[0][1]), -np.sin(three_angles[0][1]), 0, dh_table[1][2]],
+                            [np.sin(three_angles[0][1]) * np.cos(dh_table[1][3]),
+                             np.cos(three_angles[0][1]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
+                             -dh_table[1][1] * np.sin(dh_table[1][3])],
+                            [np.sin(three_angles[0][1]) * np.sin(dh_table[1][3]),
+                             np.cos(three_angles[0][1]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
+                             dh_table[1][1] * np.cos(dh_table[1][3])],
+                            [0, 0, 0, 1]])
+
+    matrix2_2 = np.array([[np.cos(three_angles[2][1]), -np.sin(three_angles[2][1]), 0, dh_table[1][2]],
+                            [np.sin(three_angles[2][1]) * np.cos(dh_table[1][3]),
+                             np.cos(three_angles[2][1]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
+                             -dh_table[1][1] * np.sin(dh_table[1][3])],
+                            [np.sin(three_angles[2][1]) * np.sin(dh_table[1][3]),
+                             np.cos(three_angles[2][1]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
+                             dh_table[1][1] * np.cos(dh_table[1][3])],
+                            [0, 0, 0, 1]])
+
+    matrix3_1 = np.array([[np.cos(three_angles[0][2]), -np.sin(three_angles[0][2]), 0, dh_table[2][2]],
+                            [np.sin(three_angles[0][2]) * np.cos(dh_table[2][3]),
+                             np.cos(three_angles[0][2]) * np.cos(dh_table[2][3]), -np.sin(dh_table[2][3]),
+                             -dh_table[2][1] * np.sin(dh_table[2][3])],
+                            [np.sin(three_angles[0][2]) * np.sin(dh_table[2][3]),
+                             np.cos(three_angles[0][2]) * np.sin(dh_table[2][3]), np.cos(dh_table[2][3]),
+                             dh_table[2][1] * np.cos(dh_table[2][3])],
+                            [0, 0, 0, 1]])
+
+    matrix3_2 = np.array([[np.cos(three_angles[2][2]), -np.sin(three_angles[2][2]), 0, dh_table[2][2]],
+                            [np.sin(three_angles[2][2]) * np.cos(dh_table[2][3]),
+                             np.cos(three_angles[2][2]) * np.cos(dh_table[2][3]), -np.sin(dh_table[2][3]),
+                             -dh_table[2][1] * np.sin(dh_table[2][3])],
+                            [np.sin(three_angles[2][2]) * np.sin(dh_table[2][3]),
+                             np.cos(three_angles[2][2]) * np.sin(dh_table[2][3]), np.cos(dh_table[2][3]),
+                             dh_table[2][1] * np.cos(dh_table[2][3])],
+                            [0, 0, 0, 1]])
+
+    matrix1 = reduce(np.dot, [matrix1_1, matrix2_1, matrix3_1])
+    matrix2 = reduce(np.dot, [matrix1_1, matrix2_2, matrix3_2])
+    matrix3 = reduce(np.dot, [matrix1_2, matrix2_2, matrix3_2])
+    matrix4 = reduce(np.dot, [matrix1_2, matrix2_1, matrix3_1])
+    return [matrix1, matrix2, matrix3, matrix4]
+
+def get_last_free_angles(list_matrix):
     pass
+
+
 
 
 def main():
@@ -120,12 +189,15 @@ def main():
     end_point = -4, 7, 3  # tuple(map(float, input('X2 Y2 Z2: ').split()))
     discretization = 200
     joints = [0, 0, 0, 0, 0, 0]
-    if not can_reach_target(l_1, l_2, l_3, end_point):
-        print("Введите другие параметры")
-        return
+
     vector_wc = get_orientation_matrix_wrist_centre(get_target_matrix(), table_dh_parameters(joints))
-    three_angles = get_first_three_angles(vector_wc, l_1, l_2, l_3)
+    three_angles = get_first_three_angles(vector_wc, table_dh_parameters(joints))
     print(three_angles)
+    list_matrix = get_r03_matrix(table_dh_parameters(joints), three_angles)
+    print(list_matrix)
+    # if not can_reach_target(l_1, l_2, l_3, end_point):
+    #     print("Введите другие параметры")
+    #     return
     # пока не стал цикл брать, нужно пока просто разобрраться со статичным положением
     # dh_params = get_dh_params()
     # path_points = get_path_points(start_point, end_point, discretization)
