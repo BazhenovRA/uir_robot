@@ -56,9 +56,9 @@ def table_dh_parameters(joints):
 
 def get_target_matrix():
     """Это матрица подается на вход - начальное положение робота"""
-    target_matrix = np.array([[-0.8086, 0, 0.5883, 0.08],
+    target_matrix = np.array([[1, 0, 0, 0.08],
                               [0, 1, 0, 0.1],
-                              [-0.5883, 0, -0.8086, 1.2],
+                              [0, 0, 1, 1.2],
                               [0, 0, 0, 1]])
     return target_matrix
 
@@ -84,32 +84,25 @@ def get_orientation_matrix_wrist_centre(target_matrix, dh_table):
 
 def get_first_three_angles(vector_wc, dh_table) -> list[tuple, tuple, tuple, tuple]:
     """Calculate joint angles for the manipulator to reach a point."""
-    x, y, z = vector_wc[0] * 1000, vector_wc[1] * 1000, vector_wc[2] * 1000
+    x, y, z = vector_wc[0], vector_wc[1], vector_wc[2]
+
     theta1 = np.degrees(np.arctan2(y, x))
-    a_1 = 300
-    a_2 = 600
-    r = 300
-    # d_2 = 135
-    # phi = np.degrees(np.arctan2(d_2, a_1))
-    d_1 = dh_table[0][1] * 1000
+    a_1 = 0.18
+    a_2 = 0.6
+    a_3 = 0.12
+    d_1 = 0.4
 
-    x = x / np.cos(theta1)
     z = z - d_1
+    print(z, x, y)
+
+    d = (x ** 2 + y ** 2 + z ** 2 - a_2 ** 2 - a_3 ** 2) / (2 * a_2 * a_3)
+
+    theta3_1 = np.degrees(np.arctan2(np.sqrt(1 - d ** 2), d))
+    theta3_2 = np.degrees(np.arctan2(-np.sqrt(1 - d ** 2), d))
 
 
-    # x0, y0 = d_1 * np.cos(theta1), d_1 * np.sin(theta1)
-
-    cos_theta3 = (x ** 2 + z ** 2 - r ** 2 - 625 ** 2) / (2 * r * 625)
-    print(cos_theta3)
-    sin_theta3 = np.sqrt(1 - cos_theta3 ** 2)
-    theta3_1 = np.degrees(np.arctan2(sin_theta3, cos_theta3))
-    theta3_2 = np.degrees(-np.arctan2(sin_theta3, cos_theta3))
-
-
-    theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_2 * np.sin(theta3_1),
-                                                                               a_1 + a_2 * np.cos(theta3_1)))
-    theta2_2 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_2 * np.sin(theta3_2),
-                                                                               a_1 + a_2 * np.cos(theta3_2)))
+    theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_3 * np.sin(theta3_1), a_2 + a_3 * np.cos(theta3_1)))
+    theta2_2 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_3 * np.sin(theta3_2), a_2 + a_3 * np.cos(theta3_2)))
 
     return [(theta1, theta2_1, theta3_1), (theta1, theta2_2, theta3_2),
             (theta1 - np.degrees(np.pi), theta2_2, theta3_2), (theta1 - np.degrees(np.pi), theta2_1, theta3_1)]
@@ -193,8 +186,8 @@ def main():
     vector_wc = get_orientation_matrix_wrist_centre(get_target_matrix(), table_dh_parameters(joints))
     three_angles = get_first_three_angles(vector_wc, table_dh_parameters(joints))
     print(three_angles)
-    list_matrix = get_r03_matrix(table_dh_parameters(joints), three_angles)
-    print(list_matrix)
+    # list_matrix = get_r03_matrix(table_dh_parameters(joints), three_angles)
+    # print(list_matrix)
     # if not can_reach_target(l_1, l_2, l_3, end_point):
     #     print("Введите другие параметры")
     #     return
