@@ -56,9 +56,9 @@ def table_dh_parameters(joints):
 
 def get_target_matrix():
     """Это матрица подается на вход - начальное положение робота"""
-    target_matrix = np.array([[1, 0, 0, 0.08],
+    target_matrix = np.array([[-0.8086, 0, 0.5883, 0.08],
                               [0, 1, 0, 0.1],
-                              [0, 0, 1, 1.2],
+                              [-0.5883, 0, -0.8086, 1.2],
                               [0, 0, 0, 1]])
     return target_matrix
 
@@ -87,18 +87,22 @@ def get_first_three_angles(vector_wc, dh_table) -> list[tuple, tuple, tuple, tup
     x, y, z = vector_wc[0], vector_wc[1], vector_wc[2]
 
     theta1 = np.degrees(np.arctan2(y, x))
+    theta2 = theta1 - np.degrees(np.pi)
     a_1 = 0.18
     a_2 = 0.6
     a_3 = 0.12
     d_1 = 0.4
+    d_4 = 0.62
 
     z = z - d_1
+
     print(z, x, y)
 
-    d = (x ** 2 + y ** 2 + z ** 2 - a_2 ** 2 - a_3 ** 2) / (2 * a_2 * a_3)
+    d = ((x ** 2 + y ** 2 + z ** 2 - a_1 ** 2 - a_2 ** 2 - a_3 ** 2) / (2 * a_2 * a_3))
+    print(d)
 
-    theta3_1 = np.degrees(np.arctan2(np.sqrt(1 - d ** 2), d))
-    theta3_2 = np.degrees(np.arctan2(-np.sqrt(1 - d ** 2), d))
+    theta3_1 = np.degrees(np.arctan2(1 - d ** 2, d ** 2))
+    theta3_2 = np.degrees(np.arctan2(-(1 - d ** 2), d** 2))
 
 
     theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_3 * np.sin(theta3_1), a_2 + a_3 * np.cos(theta3_1)))
