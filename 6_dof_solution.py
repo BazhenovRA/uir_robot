@@ -56,9 +56,9 @@ def table_dh_parameters(joints):
 
 def get_target_matrix():
     """Это матрица подается на вход - начальное положение робота"""
-    target_matrix = np.array([[1, 0, 0, 0.08],
+    target_matrix = np.array([[-0.8086, 0, 0.5883, 0.08],
                               [0, 1, 0, 0.1],
-                              [0, 0, 1, 1.2],
+                              [0.5883, 0, -0.8086, 1.2],
                               [0, 0, 0, 1]])
     return target_matrix
 
@@ -82,7 +82,7 @@ def get_orientation_matrix_wrist_centre(target_matrix, dh_table):
     return vector_wc
 
 
-def get_first_three_angles(vector_wc, dh_table) -> list[tuple, tuple, tuple, tuple]:
+def get_first_three_angles(vector_wc, dh_table):
     """Calculate joint angles for the manipulator to reach a point."""
     x, y, z = vector_wc[0], vector_wc[1], vector_wc[2]
 
@@ -90,89 +90,46 @@ def get_first_three_angles(vector_wc, dh_table) -> list[tuple, tuple, tuple, tup
     a_1 = 0.18
     a_2 = 0.6
     a_3 = 0.12
+    a_4 = 0.62
     d_1 = 0.4
 
-    z = z - d_1
-    print(z, x, y)
+    x0 = a_1 * np.cos(theta1 + 180)
+    # x0 = a_1 * np.cos(theta1)
+    y0 = a_1 * np.sin(theta1 + 180)
+    # y0 = a_1 * np.sin(theta1)
+    z0 = d_1
 
-    d = (x ** 2 + y ** 2 + z ** 2 - a_2 ** 2 - a_3 ** 2) / (2 * a_2 * a_3)
+    l_1 = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
+    l_2 = np.sqrt(a_3 ** 2 + a_4 ** 2)
 
-    theta3_1 = np.degrees(np.arctan2(np.sqrt(1 - d ** 2), d))
-    theta3_2 = np.degrees(np.arctan2(-np.sqrt(1 - d ** 2), d))
+    alpha_1 = np.degrees(np.arccos((l_2 ** 2 + a_2 ** 2 - l_1 ** 2) / (2 * a_2 * l_2)))
+    alpha_2 = -alpha_1
 
+    betta_1 = np.degrees(np.arccos(a_3 / l_2))
+    betta_2 = -betta_1
 
-    theta2_1 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_3 * np.sin(theta3_1), a_2 + a_3 * np.cos(theta3_1)))
-    theta2_2 = np.degrees(np.arctan2(z, np.sqrt(x ** 2 + y ** 2)) - np.arctan2(a_3 * np.sin(theta3_2), a_2 + a_3 * np.cos(theta3_2)))
+    print(alpha_1 + betta_1 - 180)
+    print(alpha_1 + betta_2 - 180)
+    print(alpha_2 + betta_1 - 180)
+    print(alpha_2 + betta_2 - 180)
+    print()
+    print(180 - (alpha_1 + betta_1))
+    print(180 - (alpha_1 + betta_2))
+    print(180 - (alpha_2 + betta_1))
+    print(180 - (alpha_2 + betta_2))
+    print()
 
-    return [(theta1, theta2_1, theta3_1), (theta1, theta2_2, theta3_2),
-            (theta1 - np.degrees(np.pi), theta2_2, theta3_2), (theta1 - np.degrees(np.pi), theta2_1, theta3_1)]
+    angle_1_1 = np.degrees(np.arcsin((z - z0) / l_1))
+    angle_1_2 = 180 - angle_1_1
+    angle_2_1 = np.degrees(np.arccos((a_2 ** 2 + l_1 ** 2 - l_2 ** 2) / (2 * a_2 * l_1)))
 
+    print(angle_1_1 + angle_2_1)
+    print(angle_1_2 + angle_2_1)
+    print(angle_1_1 - angle_2_1)
+    print(angle_1_2 - angle_2_1)
 
-def get_r03_matrix(dh_table, three_angles):
-    matrix1_1 = np.array([[np.cos(three_angles[0][0]), -np.sin(three_angles[0][0]), 0, dh_table[0][2]],
-                            [np.sin(three_angles[0][0]) * np.cos(dh_table[0][3]),
-                             np.cos(three_angles[0][0]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]),
-                             -dh_table[0][1] * np.sin(dh_table[0][3])],
-                            [np.sin(three_angles[0][0]) * np.sin(dh_table[0][3]),
-                             np.cos(three_angles[0][0]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]),
-                             dh_table[0][1] * np.cos(dh_table[0][3])],
-                            [0, 0, 0, 1]])
-
-    matrix1_2 = np.array([[np.cos(three_angles[2][0]), -np.sin(three_angles[2][0]), 0, dh_table[0][2]],
-                            [np.sin(three_angles[2][0]) * np.cos(dh_table[0][3]),
-                             np.cos(three_angles[2][0]) * np.cos(dh_table[0][3]), -np.sin(dh_table[0][3]),
-                             -dh_table[0][1] * np.sin(dh_table[0][3])],
-                            [np.sin(three_angles[2][0]) * np.sin(dh_table[0][3]),
-                             np.cos(three_angles[2][0]) * np.sin(dh_table[0][3]), np.cos(dh_table[0][3]),
-                             dh_table[0][1] * np.cos(dh_table[0][3])],
-                            [0, 0, 0, 1]])
-
-    matrix2_1 = np.array([[np.cos(three_angles[0][1]), -np.sin(three_angles[0][1]), 0, dh_table[1][2]],
-                            [np.sin(three_angles[0][1]) * np.cos(dh_table[1][3]),
-                             np.cos(three_angles[0][1]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
-                             -dh_table[1][1] * np.sin(dh_table[1][3])],
-                            [np.sin(three_angles[0][1]) * np.sin(dh_table[1][3]),
-                             np.cos(three_angles[0][1]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
-                             dh_table[1][1] * np.cos(dh_table[1][3])],
-                            [0, 0, 0, 1]])
-
-    matrix2_2 = np.array([[np.cos(three_angles[2][1]), -np.sin(three_angles[2][1]), 0, dh_table[1][2]],
-                            [np.sin(three_angles[2][1]) * np.cos(dh_table[1][3]),
-                             np.cos(three_angles[2][1]) * np.cos(dh_table[1][3]), -np.sin(dh_table[1][3]),
-                             -dh_table[1][1] * np.sin(dh_table[1][3])],
-                            [np.sin(three_angles[2][1]) * np.sin(dh_table[1][3]),
-                             np.cos(three_angles[2][1]) * np.sin(dh_table[1][3]), np.cos(dh_table[1][3]),
-                             dh_table[1][1] * np.cos(dh_table[1][3])],
-                            [0, 0, 0, 1]])
-
-    matrix3_1 = np.array([[np.cos(three_angles[0][2]), -np.sin(three_angles[0][2]), 0, dh_table[2][2]],
-                            [np.sin(three_angles[0][2]) * np.cos(dh_table[2][3]),
-                             np.cos(three_angles[0][2]) * np.cos(dh_table[2][3]), -np.sin(dh_table[2][3]),
-                             -dh_table[2][1] * np.sin(dh_table[2][3])],
-                            [np.sin(three_angles[0][2]) * np.sin(dh_table[2][3]),
-                             np.cos(three_angles[0][2]) * np.sin(dh_table[2][3]), np.cos(dh_table[2][3]),
-                             dh_table[2][1] * np.cos(dh_table[2][3])],
-                            [0, 0, 0, 1]])
-
-    matrix3_2 = np.array([[np.cos(three_angles[2][2]), -np.sin(three_angles[2][2]), 0, dh_table[2][2]],
-                            [np.sin(three_angles[2][2]) * np.cos(dh_table[2][3]),
-                             np.cos(three_angles[2][2]) * np.cos(dh_table[2][3]), -np.sin(dh_table[2][3]),
-                             -dh_table[2][1] * np.sin(dh_table[2][3])],
-                            [np.sin(three_angles[2][2]) * np.sin(dh_table[2][3]),
-                             np.cos(three_angles[2][2]) * np.sin(dh_table[2][3]), np.cos(dh_table[2][3]),
-                             dh_table[2][1] * np.cos(dh_table[2][3])],
-                            [0, 0, 0, 1]])
-
-    matrix1 = reduce(np.dot, [matrix1_1, matrix2_1, matrix3_1])
-    matrix2 = reduce(np.dot, [matrix1_1, matrix2_2, matrix3_2])
-    matrix3 = reduce(np.dot, [matrix1_2, matrix2_2, matrix3_2])
-    matrix4 = reduce(np.dot, [matrix1_2, matrix2_1, matrix3_1])
-    return [matrix1, matrix2, matrix3, matrix4]
-
-def get_last_free_angles(list_matrix):
-    pass
-
-
+    # return [(theta1, theta2_1, theta3_1), (theta1, theta2_2, theta3_2),
+    #         (theta1 - np.degrees(np.pi), theta2_2, theta3_2), (theta1 - np.degrees(np.pi), theta2_1, theta3_1)]
 
 
 def main():
@@ -185,7 +142,7 @@ def main():
 
     vector_wc = get_orientation_matrix_wrist_centre(get_target_matrix(), table_dh_parameters(joints))
     three_angles = get_first_three_angles(vector_wc, table_dh_parameters(joints))
-    print(three_angles)
+    # print(three_angles)
     # list_matrix = get_r03_matrix(table_dh_parameters(joints), three_angles)
     # print(list_matrix)
     # if not can_reach_target(l_1, l_2, l_3, end_point):
