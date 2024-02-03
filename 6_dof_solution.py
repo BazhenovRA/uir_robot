@@ -45,10 +45,10 @@ def table_dh_parameters(joints):
     """для души, мне так удобнее пока использовать"""
     thea_1, thea_2, thea_3, thea_4, thea_5, thea_6 = joints
     # DH_parameters: [LINK, D, A, THEA]
-    dh_table = np.array([[thea_1, 0.645, 0, np.pi / 2],
-                         [thea_2, 0, 0.33, np.pi],
-                         [thea_3, 0, 1.15, - np.pi / 2],
-                         [thea_4, 1.22, 0.115, np.pi / 2],
+    dh_table = np.array([[thea_1, 0.645, 0.33, np.pi / 2],
+                         [thea_2, 0, 1.15, np.pi],
+                         [thea_3, 0, 0.115, - np.pi / 2],
+                         [thea_4, 1.22, 0, np.pi / 2],
                          [thea_5, 0, 0, -np.pi / 2],
                          [thea_6, 0.24, 0, 0]])
     return dh_table
@@ -146,8 +146,8 @@ def get_first_three_angles(vector_wc):
 def take_first_three_angles() -> list[tuple, tuple, tuple]:
     # (solution1 and solution2, solution3 and solution4, solution5 and solution6, solution7 and solution8)
     return [(121.463, -58.537, -58.537, 121.463),
-            (175.779, 22.011, 175.779, 22.011),
-            (58.33, -227.56, 58.33, -227.56)]
+            (29.011, 182.06, 47.7, 192.593),
+            (-222.533, 53.303, -226.508, 57.279)]
 
 
 def get_t_matrix(dh_params: dict[str, tuple], theta_1: float, theta_2: float, theta_3: float) -> list[np.ndarray]:
@@ -193,14 +193,14 @@ def get_r36_matrix(t01_matrix: np.ndarray, t12_matrix: np.ndarray, t23_matrix: n
 
 
 def get_last_three_angles(r36_matrix: np.ndarray) -> list[tuple, tuple, tuple]:
-    theta_4_1 = np.degrees(np.arctan2(r36_matrix[1][2], r36_matrix[0][2])) + 180
-    theta_4_2 = np.degrees(np.arctan2(-r36_matrix[1][2], -r36_matrix[0][2])) - 180
+    theta_4_1 = np.degrees(np.arctan2(r36_matrix[1][2], r36_matrix[0][2]))
+    theta_4_2 = np.degrees(np.arctan2(-r36_matrix[1][2], -r36_matrix[0][2]))
 
     theta_5_1 = np.degrees(np.arctan2(np.sqrt(r36_matrix[0][2] ** 2 + r36_matrix[1][2] ** 2), r36_matrix[2][2]))
     theta_5_2 = -theta_5_1
 
     theta_6_1 = np.degrees(np.arctan2(-r36_matrix[2][1], r36_matrix[2][0]))
-    theta_6_2 = -np.degrees(np.arctan2(-r36_matrix[2][1], -r36_matrix[2][0]))
+    theta_6_2 = 180 - np.degrees(np.arctan2(-r36_matrix[2][1], -r36_matrix[2][0]))
 
     return [(theta_4_1, theta_4_2), (theta_5_1, theta_5_2), (theta_6_1, theta_6_2)]
 
@@ -208,7 +208,7 @@ def main():
 
     joints = [0, 0, 0, 0, 0, 0]
     dh_params = get_dh_params()
-    discretization = 10
+    discretization = 500
     start_point = 0.08, 0.1, 1.2
     end_point = 0.35, 0.2, 1.2
 
@@ -247,45 +247,131 @@ def main():
         f'Soliton7\n{round(three_angles[0][0], 3)}\n{round(three_angles[1][0], 3)}\n{round(three_angles[2][2], 3)}\n{round(sp_last_free[3][0][0], 3)}\n{round(sp_last_free[3][1][0], 3)}\n{round(sp_last_free[3][2][0], 3)}')
     print(
         f'Soliton8\n{round(three_angles[0][0], 3)}\n{round(three_angles[1][0], 3)}\n{round(three_angles[2][2], 3)}\n{round(sp_last_free[3][0][1], 3)}\n{round(sp_last_free[3][1][1], 3)}\n{round(sp_last_free[3][2][1], 3)}')
-
-    # list_matrix = get_r03_matrix(table_dh_parameters(joints), three_angles)
-    # print(list_matrix)
-    # if not can_reach_target(l_1, l_2, l_3, end_point):
-    #     print("Введите другие параметры")
-    #     return
-    # пока не стал цикл брать, нужно пока просто разобрраться со статичным положением
-    # dh_params = get_dh_params()
     path_points = get_path_points(start_point, end_point, discretization)
     dh_table = table_dh_parameters(joints)
     list_theta1 = []
+    list_theta1_1 = []
+
     list_theta2 = []
-    lst_path_point = [0]
+    list_theta2_2 = []
+    list_theta2_3 = []
+    list_theta2_4 = []
+
+    list_theta3 = []
+    list_theta3_1 = []
+    list_theta3_2 = []
+    list_theta3_3 = []
+    list_theta4 = []
+    list_theta4_1 = []
+    list_theta4_2 = []
+    list_theta4_3 = []
+    list_theta4_4 = []
+    list_theta4_5 = []
+    list_theta4_6 = []
+    list_theta4_7 = []
+
+
+    list_theta5 = []
+    list_theta6 = []
+    lst_path_point = []
     for point in path_points:
         matrix = np.array([[-0.8086, 0, 0.5883, point[0]],
                                   [0, 1, 0, point[1]],
                                   [0.5883, 0, -0.8086, point[2]],
                                   [0, 0, 0, 1]])
         vector = get_orientation_matrix_wrist_centre(matrix, dh_table)
-        print(vector)
         angles = get_first_three_angles(vector)
+
+
         theta_first = angles[0][0]
-        theta_second = angles[1][1]
+        theta_first_1 = angles[0][1]
+        theta_second = angles[1][0]
+        theta_second_2 = angles[1][1]
+        theta_second_3 = angles[1][2]
+        theta_second_4 = angles[1][3]
+
+        theta_third = angles[2][0]
+        theta_third_1 = angles[2][1]
+        theta_third_2 = angles[2][2]
+        theta_third_3 = angles[2][3]
+        t01_matrix, t12_matrix, t23_matrix = get_t_matrix(dh_params, theta_first, theta_second, theta_third)
+        r36_matrix = get_r36_matrix(t01_matrix, t12_matrix, t23_matrix)
+        theta_4_set, theta_5_set, theta_6_set = get_last_three_angles(r36_matrix)
+
+        t01_matrix, t12_matrix, t23_matrix = get_t_matrix(dh_params, theta_first_1, theta_second_3, theta_third_2)
+        r36_matrix = get_r36_matrix(t01_matrix, t12_matrix, t23_matrix)
+        theta_4_set_1, theta_5_set_1, theta_6_set_1 = get_last_three_angles(r36_matrix)
+
+        t01_matrix, t12_matrix, t23_matrix = get_t_matrix(dh_params, theta_first, theta_second_2, theta_third_1)
+        r36_matrix = get_r36_matrix(t01_matrix, t12_matrix, t23_matrix)
+        theta_4_set_2, theta_5_set_2, theta_6_set_2 = get_last_three_angles(r36_matrix)
+
+        t01_matrix, t12_matrix, t23_matrix = get_t_matrix(dh_params, theta_first_1, theta_second_4, theta_third_3)
+        r36_matrix = get_r36_matrix(t01_matrix, t12_matrix, t23_matrix)
+        theta_4_set_3, theta_5_set_3, theta_6_set_3 = get_last_three_angles(r36_matrix)
+
+        theta_five = theta_6_set[1]
+        theta_five_1 = theta_6_set[0]
+        theta_five_2 = theta_6_set_1[0]
+        theta_five_3 = theta_6_set_1[1]
+        theta_five_4 = theta_6_set_2[0]
+        theta_five_5 = theta_6_set_2[1]
+        theta_five_6 = theta_6_set_3[0]
+        theta_five_7 = theta_6_set_3[1]
+
+
+        theta_six = theta_6_set[1]
+        list_theta6.append(theta_six)
+        list_theta5.append(theta_five)
+        list_theta4.append(theta_five)
+        list_theta4_1.append(theta_five_1)
+        list_theta4_2.append(theta_five_2)
+        list_theta4_3.append(theta_five_3)
+        list_theta4_4.append(theta_five_4)
+        list_theta4_5.append(theta_five_5)
+        list_theta4_6.append(theta_five_6)
+        list_theta4_7.append(theta_five_7)
+
+
+        list_theta1_1.append(theta_first_1)
+        list_theta2_2.append(theta_second_2)
+        list_theta2_3.append(theta_second_3)
+        list_theta2_4.append(theta_second_4)
+
+        list_theta3_1.append(theta_third_1)
+        list_theta3_2.append(theta_third_2)
+        list_theta3_3.append(theta_third_3)
+
         list_theta1.append(theta_first)
         list_theta2.append(theta_second)
-    for i in range(len(path_points) - 1):
-        x_0, x_1 = path_points[i][0], path_points[i + 1][0]
-        y_0, y_1 = path_points[i][1], path_points[i + 1][1]
-        z_0, z_1 = path_points[i][2], path_points[i + 1][2]
+        list_theta3.append(theta_third)
+
+    for i in range(len(path_points)):
+        x_0, x_1 = path_points[0][0], path_points[i][0]
+        y_0, y_1 = path_points[0][1], path_points[i][1]
+        z_0, z_1 = path_points[0][2], path_points[i][2]
         d = np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2 + (z_1 - z_0) ** 2)
         lst_path_point.append(d)
     print(lst_path_point)
     fig, ax = plt.subplots()
-    ax.set_title("Зависимость углов от расстояния")
-    ax.set_xlabel('Расстояние')
-    ax.set_ylabel('Углы')
+    ax.set_title("Зависимость углов(theta6) от расстояния")
+    ax.set_xlabel('Расстояние(метры)')
+    ax.set_ylabel('Углы(градусы)')
     ax.grid(True)
-    ax.plot(lst_path_point, list_theta1, '-o')
-    ax.plot(lst_path_point, list_theta2, '-o')
+    ax.plot(lst_path_point, list_theta4)
+    # ax.plot(lst_path_point, list_theta4_1)
+    ax.plot(lst_path_point, list_theta4_2)
+    # ax.plot(lst_path_point, list_theta4_3)
+    ax.plot(lst_path_point, list_theta4_4)
+    # ax.plot(lst_path_point, list_theta4_5)
+    ax.plot(lst_path_point, list_theta4_6)
+    # ax.plot(lst_path_point, list_theta4_7)
+    plt.legend(['theta1', 'theta2', 'theta3', 'theta4'])
+    # ax.plot(lst_path_point, list_theta3)
+    # ax.plot(lst_path_point, list_theta4)
+    # ax.plot(lst_path_point, list_theta5)
+    # ax.plot(lst_path_point, list_theta6)
+
 
     plt.show()
 
