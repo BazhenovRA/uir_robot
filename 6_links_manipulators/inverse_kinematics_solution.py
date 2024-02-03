@@ -24,12 +24,12 @@ def get_dh_params() -> dict[str, tuple]:
 
 def get_first_three_angles() -> list[tuple, tuple, tuple]:
     # (solution1 and solution2, solution3 and solution4, solution5 and solution6, solution7 and solution8)
-    # return [(82.962, -97.038, -97.038, 82.962),
-    #         (50.389, 65.658, 149.249, 139.753),
-    #         (-165.649, -160.13, 2.038, 7.557)]
-    return [(-117.63, 62.37, 62.37, -117.63),
-            (-163.332, 175.149, 24.238, 56.722),
-            (54.137, 63.286, 138.622, 147.772)]
+    return [(82.962, -97.038, -97.038, 82.962),
+            (50.389, 65.658, 149.249, 139.753),
+            (-165.649, -160.13, 2.038, 7.557)]
+    # return [(-117.63, 62.37, 62.37, -117.63),
+    #         (-163.332, 175.149, 24.238, 56.722),
+    #         (54.137, 63.286, 138.622, 147.772)]
 
 
 def get_t_matrix(dh_params: dict[str, tuple], theta_1: float, theta_2: float, theta_3: float) -> list[np.ndarray]:
@@ -90,7 +90,7 @@ def get_last_three_angles(r36_matrix: np.ndarray) -> list[tuple, tuple, tuple]:
 def main():
     dh_params = get_dh_params()
 
-    theta_1_set, theta_2_set, theta_3_set = get_first_three_angles()
+    theta_1_set, theta_2_set, theta_3_set = take_first_three_angles()
 
     for i in range(4):  # 4 solutions as 3-DoF manipulator
         theta_1 = np.radians(theta_1_set[i])

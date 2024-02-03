@@ -25,24 +25,12 @@ def get_angles(point, l_1, l_2, l_3):
     for i in range(len(beta_angles)):
         # beta_0 = beta_angles[i]
         beta = beta_angles[i]
-        # cos_alpha_0 = (np.cos(beta_0) * x + np.sin(beta_0) * y)/(np.sqrt(x ** 2 + y ** 2))
         cos_alpha = (np.cos(beta) * x + np.sin(beta) * y) / (np.sqrt(x ** 2 + y ** 2))
-        # if i < 500:
-        #    continue
-        # if -1 > cos_alpha or cos_alpha > 1:
-        #    continue
         if -1 > cos_alpha or cos_alpha > 1:
             continue
         else:
-
-            # alpha_0 = np.arccos(cos_alpha_0)
             alpha = np.arccos(cos_alpha)
             lst.append((alpha, beta))
-            #if alpha < alpha_0:
-            #    continue
-            #if alpha > alpha_0:
-            #    beta_new = beta_0
-             #   break
     kortezh = min(lst)
     beta_new = kortezh[1]
     z0 = 0
@@ -109,9 +97,9 @@ def update_speed(val):
 
 def main():
     # Input parameters
-    l_1, l_2, l_3 = 3, 10, 7  # map(float, input('L1 L2: ').split())
-    start_point = 4, 7, 3  # tuple(map(float, input('X1 Y1 Z1: ').split()))
-    end_point = -3, 10, 5  # tuple(map(float, input('X2 Y2 Z2: ').split()))
+    l_1, l_2, l_3 = map(float, input('L1 L2 L3: ').split())
+    start_point = tuple(map(float, input('X1 Y1 Z1: ').split()))
+    end_point = tuple(map(float, input('X2 Y2 Z2: ').split()))
 
     if not can_reach_target(l_1, l_2, l_3, end_point):
         print("Введите другие параметры")
