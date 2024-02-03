@@ -1,4 +1,4 @@
-from functools import reduce
+from matplotlib import pyplot as plt
 
 import numpy as np
 
@@ -82,13 +82,13 @@ def get_orientation_matrix_wrist_centre(target_matrix, dh_table):
     return vector_wc
 
 
-def get_first_three_angles(vector_wc, dh_table):
+def get_first_three_angles(vector_wc):
     """Calculate joint angles for the manipulator to reach a point."""
     x, y, z = vector_wc[0], vector_wc[1], vector_wc[2]
 
     theta1 = np.degrees(np.arctan2(y, x))
     theta1_1 = theta1 - 180
-    a_1 = 0
+    a_1 = 0.33
     a_2 = 1.15
     a_3 = 0.115
     a_4 = 1.22
@@ -208,9 +208,13 @@ def main():
 
     joints = [0, 0, 0, 0, 0, 0]
     dh_params = get_dh_params()
+    discretization = 10
+    start_point = 0.08, 0.1, 1.2
+    end_point = 0.35, 0.2, 1.2
+
 
     vector_wc = get_orientation_matrix_wrist_centre(get_target_matrix(), table_dh_parameters(joints))
-    three_angles = get_first_three_angles(vector_wc, table_dh_parameters(joints))
+    three_angles = get_first_three_angles(vector_wc)
 
     theta_1_set, theta_2_set, theta_3_set = take_first_three_angles()
     sp_last_free = []
@@ -251,11 +255,39 @@ def main():
     #     return
     # пока не стал цикл брать, нужно пока просто разобрраться со статичным положением
     # dh_params = get_dh_params()
-    # path_points = get_path_points(start_point, end_point, discretization)
+    path_points = get_path_points(start_point, end_point, discretization)
+    dh_table = table_dh_parameters(joints)
+    list_theta1 = []
+    list_theta2 = []
+    lst_path_point = [0]
+    for point in path_points:
+        matrix = np.array([[-0.8086, 0, 0.5883, point[0]],
+                                  [0, 1, 0, point[1]],
+                                  [0.5883, 0, -0.8086, point[2]],
+                                  [0, 0, 0, 1]])
+        vector = get_orientation_matrix_wrist_centre(matrix, dh_table)
+        print(vector)
+        angles = get_first_three_angles(vector)
+        theta_first = angles[0][0]
+        theta_second = angles[1][1]
+        list_theta1.append(theta_first)
+        list_theta2.append(theta_second)
+    for i in range(len(path_points) - 1):
+        x_0, x_1 = path_points[i][0], path_points[i + 1][0]
+        y_0, y_1 = path_points[i][1], path_points[i + 1][1]
+        z_0, z_1 = path_points[i][2], path_points[i + 1][2]
+        d = np.sqrt((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2 + (z_1 - z_0) ** 2)
+        lst_path_point.append(d)
+    print(lst_path_point)
+    fig, ax = plt.subplots()
+    ax.set_title("Зависимость углов от расстояния")
+    ax.set_xlabel('Расстояние')
+    ax.set_ylabel('Углы')
+    ax.grid(True)
+    ax.plot(lst_path_point, list_theta1, '-o')
+    ax.plot(lst_path_point, list_theta2, '-o')
 
-    # for point in path_points:
-    #     three_angles = get_first_three_angles(point, l_1, l_2, l_3)
-    #     r03_matrix = get_r03_matrix(dh_params)
+    plt.show()
 
 
 if __name__ == '__main__':
